@@ -15,6 +15,10 @@
   (ok (typep (a2a-backend-jsonrpc:make-jsonrpc-a2a-backend)
              'a2a-backend-jsonrpc:jsonrpc-a2a-backend)))
 
+(deftest transport-is-http-rpc
+  (ok (typep (a2a-backend-jsonrpc:make-jsonrpc-a2a-transport :url "http://127.0.0.1/")
+             'rpc-backend-http:http-rpc-transport)))
+
 (deftest well-known-paths
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent-card.json"))
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent.json"))

@@ -1,10 +1,10 @@
 (defsystem "a2a-backend-jsonrpc"
-  :version "0.1.1"
+  :version "0.2.0"
   :description "JSON-RPC 2.0 + SSE binding for a2a-protocol"
   :author "egao1980"
   :license "MIT"
   :depends-on ("a2a-protocol" "rpc-protocol" "rpc-protocol-json"
-               "sse-protocol" "http-protocol" "babel")
+               "rpc-backend-http" "sse-protocol" "http-protocol" "babel")
   :serial t
   :pathname "src"
   :components ((:file "package")
