@@ -3,7 +3,7 @@
   :description "JSON-RPC 2.0 + SSE binding for a2a-protocol"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("a2a-protocol" "rpc-protocol" "sse-protocol")
+  :depends-on ("a2a-protocol" "rpc-protocol" "sse-protocol" "http-protocol" "babel")
   :serial t
   :pathname "src"
   :components ((:file "package")
@@ -11,7 +11,7 @@
   :in-order-to ((test-op (test-op "a2a-backend-jsonrpc/tests"))))
 
 (defsystem "a2a-backend-jsonrpc/tests"
-  :depends-on ("a2a-backend-jsonrpc" "rove")
+  :depends-on ("a2a-backend-jsonrpc" "rpc-backend-inprocess" "rove")
   :pathname "tests"
   :serial t
   :components ((:file "package")
