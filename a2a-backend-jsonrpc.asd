@@ -12,7 +12,7 @@
   :in-order-to ((test-op (test-op "a2a-backend-jsonrpc/tests"))))
 
 (defsystem "a2a-backend-jsonrpc/tests"
-  :depends-on ("a2a-backend-jsonrpc" "rpc-backend-inprocess" "rove")
+  :depends-on ("a2a-backend-jsonrpc" "rpc-backend-inprocess" "rpc-protocol-json" "rove")
   :pathname "tests"
   :serial t
   :components ((:file "package")
