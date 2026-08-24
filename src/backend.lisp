@@ -279,7 +279,8 @@
 
 (defmethod a2a-protocol:list-tasks ((backend jsonrpc-a2a-backend)
                                     &key context-id status page-size page-token
-                                      history-length include-artifacts)
+                                      history-length include-artifacts
+                                      status-timestamp-after)
   (%rpc backend "ListTasks"
         (a2a-protocol:json-object
          "contextId" (or context-id :omit)
@@ -287,7 +288,8 @@
          "pageSize" (or page-size :omit)
          "pageToken" (or page-token :omit)
          "historyLength" (or history-length :omit)
-         "includeArtifacts" (if include-artifacts t :omit))))
+         "includeArtifacts" (if include-artifacts t :omit)
+         "statusTimestampAfter" (or status-timestamp-after :omit))))
 
 (defmethod a2a-protocol:cancel-task ((backend jsonrpc-a2a-backend) task-id &key)
   (a2a-protocol:decode-task

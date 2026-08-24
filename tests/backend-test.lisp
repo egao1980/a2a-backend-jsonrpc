@@ -29,7 +29,10 @@
         (ok (search "application/json" (getf (second res) :content-type)))
         (let ((card (a2a-protocol:decode-json (first (third res)))))
           (ok (equal "echo" (gethash "name" card)))
-          (ok (equal "1.0" (gethash "protocolVersion" card))))))))
+          (ok (null (gethash "protocolVersion" card)))
+          (ok (equal "1.0"
+                     (gethash "protocolVersion"
+                              (elt (gethash "supportedInterfaces" card) 0)))))))))
 
 (deftest clack-send-message
   (let* ((agent (%agent))
