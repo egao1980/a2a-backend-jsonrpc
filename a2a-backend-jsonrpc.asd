@@ -3,7 +3,8 @@
   :description "JSON-RPC 2.0 + SSE binding for a2a-protocol"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("a2a-protocol" "rpc-protocol" "rpc-protocol-json"
+  :depends-on ((:version "a2a-protocol" "0.2.0")
+               "rpc-protocol" "rpc-protocol-json"
                "rpc-backend-http" "sse-protocol" "http-protocol" "babel")
   :serial t
   :pathname "src"
