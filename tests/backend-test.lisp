@@ -15,6 +15,10 @@
   (ok (typep (a2a-backend-jsonrpc:make-jsonrpc-a2a-backend)
              'a2a-backend-jsonrpc:jsonrpc-a2a-backend)))
 
+(deftest transport-is-http-rpc
+  (ok (typep (a2a-backend-jsonrpc:make-jsonrpc-a2a-transport :url "http://127.0.0.1/")
+             'rpc-backend-http:http-rpc-transport)))
+
 (deftest well-known-paths
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent-card.json"))
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent.json"))
@@ -29,7 +33,10 @@
         (ok (search "application/json" (getf (second res) :content-type)))
         (let ((card (a2a-protocol:decode-json (first (third res)))))
           (ok (equal "echo" (gethash "name" card)))
-          (ok (equal "1.0" (gethash "protocolVersion" card))))))))
+          (ok (null (gethash "protocolVersion" card)))
+          (ok (equal "1.0"
+                     (gethash "protocolVersion"
+                              (elt (gethash "supportedInterfaces" card) 0)))))))))
 
 (deftest clack-send-message
   (let* ((agent (%agent))

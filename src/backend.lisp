@@ -19,16 +19,22 @@
 (defun use-jsonrpc-a2a-backend (&rest args &key &allow-other-keys)
   (setf a2a-protocol:*a2a-backend* (apply #'make-jsonrpc-a2a-backend args)))
 
-(defclass jsonrpc-a2a-transport (rpc-protocol:rpc-transport)
-  ((url :initarg :url :initform nil :accessor transport-url)
-   (protocol-version :initarg :protocol-version
+(defclass jsonrpc-a2a-transport (rpc-backend-http:http-rpc-transport)
+  ((protocol-version :initarg :protocol-version
                      :accessor transport-protocol-version
-                     :initform a2a-protocol:+a2a-protocol-version+)
-   (next-id :initform 0 :accessor transport-next-id)))
+                     :initform a2a-protocol:+a2a-protocol-version+))
+  (:documentation "http-rpc-transport plus A2A-Version / SSE accept."))
+
+(defun %a2a-transport-headers (protocol-version)
+  `(("A2A-Version" . ,protocol-version)
+    ("accept" . "application/json, text/event-stream")))
 
 (defun make-jsonrpc-a2a-transport
     (&key url (protocol-version a2a-protocol:+a2a-protocol-version+))
-  (make-instance 'jsonrpc-a2a-transport :url url :protocol-version protocol-version))
+  (make-instance 'jsonrpc-a2a-transport
+                 :url url
+                 :protocol-version protocol-version
+                 :headers (%a2a-transport-headers protocol-version)))
 
 (defun %transport (backend)
   (or (backend-transport backend)
@@ -112,9 +118,10 @@
       (%raise-rpc (rpc-protocol:decode-message body))))
 
 (defun %a2a-headers (transport)
-  `(("content-type" . "application/json")
-    ("accept" . "application/json, text/event-stream")
-    ("A2A-Version" . ,(transport-protocol-version transport))))
+  (append (rpc-backend-http:transport-headers transport)
+          `(("content-type" . "application/json")
+            ("accept" . "application/json, text/event-stream")
+            ("A2A-Version" . ,(transport-protocol-version transport)))))
 
 (defun %ensure-url (transport)
   (or (transport-url transport)
@@ -279,7 +286,8 @@
 
 (defmethod a2a-protocol:list-tasks ((backend jsonrpc-a2a-backend)
                                     &key context-id status page-size page-token
-                                      history-length include-artifacts)
+                                      history-length include-artifacts
+                                      status-timestamp-after)
   (%rpc backend "ListTasks"
         (a2a-protocol:json-object
          "contextId" (or context-id :omit)
@@ -287,7 +295,8 @@
          "pageSize" (or page-size :omit)
          "pageToken" (or page-token :omit)
          "historyLength" (or history-length :omit)
-         "includeArtifacts" (if include-artifacts t :omit))))
+         "includeArtifacts" (if include-artifacts t :omit)
+         "statusTimestampAfter" (or status-timestamp-after :omit))))
 
 (defmethod a2a-protocol:cancel-task ((backend jsonrpc-a2a-backend) task-id &key)
   (a2a-protocol:decode-task
@@ -308,7 +317,7 @@
 
 (defun %post-rpc (transport method params &key timeout id notify)
   (%ensure-http)
-  (let* ((url (%ensure-url transport))
+  (let* (         (url (%ensure-url transport))
          (id (or id (incf (transport-next-id transport))))
          (body (if notify
                    (rpc-protocol:encode-notification method params)
