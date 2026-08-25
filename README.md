@@ -17,7 +17,7 @@ Client GFs (`send-message`, `get-task`, …) talk JSON-RPC over `rpc-protocol` (
 
 Part of [cl-stack](https://github.com/egao1980/cl-stack) agent-wire. Tracks [#186](https://github.com/egao1980/cl-stack/issues/186).
 
-CI: `setup-client` + `setup-roswell` + `scripts/ci-install.lisp` / `ci-test.lisp` (OCI only).
+CI: canned [`cl-repository`](https://github.com/egao1980/cl-repository) (`test-system.yml` / `setup-client` + `ci`). Deps from `ghcr.io/egao1980/cl-systems`.
 
 ## License
 
