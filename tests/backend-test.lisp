@@ -19,6 +19,13 @@
   (ok (typep (a2a-backend-jsonrpc:make-jsonrpc-a2a-transport :url "http://127.0.0.1/")
              'rpc-backend-http:http-rpc-transport)))
 
+(deftest a2a-version-header-once
+  (let* ((tx (a2a-backend-jsonrpc:make-jsonrpc-a2a-transport :url "http://127.0.0.1/"))
+         (hs (a2a-backend-jsonrpc::%a2a-headers tx))
+         (vers (remove "A2A-Version" hs :key #'car :test-not #'string-equal)))
+    (ok (= 1 (length vers)))
+    (ok (equal a2a-protocol:+a2a-protocol-version+ (cdr (first vers))))))
+
 (deftest well-known-paths
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent-card.json"))
   (ok (a2a-backend-jsonrpc:well-known-card-path-p "/.well-known/agent.json"))

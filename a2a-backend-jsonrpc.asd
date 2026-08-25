@@ -1,5 +1,5 @@
 (defsystem "a2a-backend-jsonrpc"
-  :version "0.2.0"
+  :version "0.2.1"
   :description "JSON-RPC 2.0 + SSE binding for a2a-protocol"
   :author "egao1980"
   :license "MIT"
