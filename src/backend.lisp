@@ -118,10 +118,14 @@
       (%raise-rpc (rpc-protocol:decode-message body))))
 
 (defun %a2a-headers (transport)
-  (append (rpc-backend-http:transport-headers transport)
-          `(("content-type" . "application/json")
-            ("accept" . "application/json, text/event-stream")
-            ("A2A-Version" . ,(transport-protocol-version transport)))))
+  ;; transport-headers already has A2A-Version; do not append a second copy.
+  ;; Node joins duplicates into "1.0, 1.0" and rejects the version (-32009).
+  (let ((extras (remove "A2A-Version" (rpc-backend-http:transport-headers transport)
+                        :key #'car :test #'string-equal)))
+    (append extras
+            `(("content-type" . "application/json")
+              ("accept" . "application/json, text/event-stream")
+              ("A2A-Version" . ,(transport-protocol-version transport))))))
 
 (defun %ensure-url (transport)
   (or (transport-url transport)
