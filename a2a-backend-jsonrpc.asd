@@ -6,7 +6,7 @@
   :depends-on ((:version "a2a-protocol" "0.2.0")
                "rpc-protocol" "rpc-protocol-json"
                "rpc-backend-http" "sse-protocol" "http-protocol" "babel")
-  :properties (:cl-repo (:ci (:with ("dissect") :sources (("dissect" :ql)))))
+  :properties (:cl-repo (:ci (:with ("dissect"))))
   :serial t
   :pathname "src"
   :components ((:file "package")
