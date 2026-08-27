@@ -44,8 +44,8 @@
                :url (backend-url backend)
                :protocol-version (backend-protocol-version backend))))
       rpc-protocol:*rpc-transport*
-      (error 'a2a-protocol:a2a-error
-             :message "jsonrpc backend has no transport or :url")))
+      (a2a-protocol:signal-a2a-error
+       :message "jsonrpc backend has no transport or :url")))
 
 (defun %header (env name)
   (let ((headers (getf env :headers)))
@@ -137,10 +137,11 @@
   (handler-case
       (funcall fn)
     (rpc-protocol:rpc-error (c)
-      (error 'a2a-protocol:a2a-error
-             :message (rpc-protocol:rpc-error-message c)
-             :code (rpc-protocol:rpc-error-code c)
-             :data (rpc-protocol:rpc-error-data c)))))
+      (a2a-protocol:signal-a2a-error
+       :message (rpc-protocol:rpc-error-message c)
+       :code (rpc-protocol:rpc-error-code c)
+       :data (rpc-protocol:rpc-error-data c)
+       :cause c))))
 
 (defun %rpc (backend method params)
   (%wrap-a2a-error
@@ -227,8 +228,8 @@
 
 (defun %ensure-http ()
   (unless http-protocol:*http-backend*
-    (error 'a2a-protocol:a2a-error
-           :message "*http-backend* is nil — bind an http-protocol backend")))
+    (a2a-protocol:signal-a2a-error
+     :message "*http-backend* is nil — bind an http-protocol backend")))
 
 (defun %card-url (url)
   (cond
@@ -245,8 +246,8 @@
          (status (http-protocol:response-status res))
          (text (%body-string res)))
     (unless (<= 200 status 299)
-      (error 'a2a-protocol:a2a-error
-             :message (format nil "HTTP ~a fetching agent card" status)))
+      (a2a-protocol:signal-a2a-error
+       :message (format nil "HTTP ~a fetching agent card" status)))
     (let ((card (a2a-protocol:decode-agent-card (a2a-protocol:decode-json text))))
       (setf (backend-card backend) card)
       card)))

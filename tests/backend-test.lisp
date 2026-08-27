@@ -120,3 +120,20 @@
     (ok (gethash "error" msg))
     (ok (eql a2a-protocol:+a2a-error-version-not-supported+
              (gethash "code" (gethash "error" msg))))))
+
+(deftest wrap-rpc-task-not-found
+  (ok (signals
+       (a2a-backend-jsonrpc::%wrap-a2a-error
+        (lambda ()
+          (error 'rpc-protocol:rpc-error
+                 :code a2a-protocol:+a2a-error-task-not-found+
+                 :message "missing")))
+       'a2a-protocol:a2a-task-not-found)))
+
+(deftest missing-task-via-backend-is-typed
+  (let* ((agent (%agent))
+         (transport (rpc-backend-inprocess:make-inprocess-rpc-transport))
+         (backend (a2a-backend-jsonrpc:make-jsonrpc-a2a-backend :transport transport)))
+    (a2a-protocol:serve-a2a agent :transport transport)
+    (ok (signals (a2a-protocol:get-task backend "missing")
+                 'a2a-protocol:a2a-task-not-found))))
