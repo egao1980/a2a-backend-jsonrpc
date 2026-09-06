@@ -137,3 +137,62 @@
     (a2a-protocol:serve-a2a agent :transport transport)
     (ok (signals (a2a-protocol:get-task backend "missing")
                  'a2a-protocol:a2a-task-not-found))))
+
+(deftest clack-push-refused
+  (let* ((app (a2a-backend-jsonrpc:make-a2a-app (%agent)))
+         (res (funcall app
+                       (list :request-method :post
+                             :path-info "/"
+                             :raw-body (rpc-protocol:encode-request
+                                        "CreateTaskPushNotificationConfig"
+                                        (a2a-protocol:json-object)
+                                        :id 1))))
+         (msg (rpc-protocol:decode-message (first (third res)))))
+    (ok (gethash "error" msg))
+    (ok (eql a2a-protocol:+a2a-error-push-not-supported+
+             (gethash "code" (gethash "error" msg))))))
+
+(defun %free-port ()
+  (let* ((sock (usocket:socket-listen "127.0.0.1" 0 :reuseaddress t))
+         (port (usocket:get-local-port sock)))
+    (usocket:socket-close sock)
+    port))
+
+(defmacro with-live-http (&body body)
+  `(progn
+     (http-server-backend-hunchentoot:use-hunchentoot-backend)
+     (let* ((eb (event-backend-libuv:make-libuv-backend))
+            (el (event-protocol:make-event-loop eb))
+            (http-backend-async:*event-backend-maker* (lambda () eb)))
+       (event-protocol:with-event-backend (eb)
+         (event-protocol:with-event-loop-var (el)
+           (let ((http-protocol:*http-backend*
+                   (http-backend-async:make-async-backend)))
+             ,@body))))))
+
+(deftest live-http-stream-message
+  (with-live-http
+    (let ((port (%free-port)))
+      (http-server-protocol:with-server
+          (s (a2a-backend-jsonrpc:make-a2a-app (%agent))
+             :host "127.0.0.1" :port port)
+        (sleep 0.2)
+        (let* ((backend (a2a-backend-jsonrpc:make-jsonrpc-a2a-backend
+                         :url (format nil "http://127.0.0.1:~a/" port)))
+               (result (a2a-protocol:stream-message
+                        backend (a2a-protocol:make-a2a-message :text "stream")))
+               (events (a2a-protocol:a2a-stream-events result)))
+          (ok (= 3 (length events)))
+          (ok (gethash "task" (first events)))
+          (ok (gethash "artifactUpdate" (second events)))
+          (ok (gethash "statusUpdate" (third events))))))))
+
+(deftest inprocess-stream-message
+  (let* ((agent (%agent))
+         (transport (rpc-backend-inprocess:make-inprocess-rpc-transport))
+         (backend (a2a-backend-jsonrpc:make-jsonrpc-a2a-backend :transport transport)))
+    (a2a-protocol:serve-a2a agent :transport transport)
+    (let ((result (a2a-protocol:stream-message
+                   backend (a2a-protocol:make-a2a-message :text "via-gf"))))
+      (ok (typep result 'a2a-protocol:a2a-stream-result))
+      (ok (= 3 (length (a2a-protocol:a2a-stream-events result)))))))
