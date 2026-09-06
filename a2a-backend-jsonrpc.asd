@@ -20,7 +20,7 @@
                "http-server-protocol"
                "http-server-backend-hunchentoot"
                "http-backend-async"
-               "event-backend-libuv"
+               "http-backend-dexador"
                "event-protocol"
                "usocket"
                "rove")
