@@ -148,6 +148,33 @@
    (lambda ()
      (rpc-protocol:rpc-call method params :transport (%transport backend)))))
 
+(defun %http-transport-p (transport)
+  (typep transport 'rpc-backend-http:http-rpc-transport))
+
+(defun %events-from-result (result)
+  (cond
+    ((typep result 'a2a-protocol:a2a-stream-result)
+     (a2a-protocol:a2a-stream-events result))
+    ((listp result) result)
+    (t (list result))))
+
+(defun %rpc-stream (backend method params)
+  (%wrap-a2a-error
+   (lambda ()
+     (let ((stream (rpc-protocol:rpc-call-stream
+                    method params :transport (%transport backend))))
+       (unwind-protect
+            (loop for ev = (rpc-protocol:rpc-recv stream)
+                  until (eq ev :eof)
+                  collect ev)
+         (rpc-protocol:rpc-close stream))))))
+
+(defun %stream-events (backend method params)
+  (let ((transport (%transport backend)))
+    (if (%http-transport-p transport)
+        (%rpc-stream backend method params)
+        (%events-from-result (%rpc backend method params)))))
+
 (defun %card-response (card)
   (list 200
         '(:content-type "application/json; charset=utf-8")
@@ -269,17 +296,13 @@
 
 (defmethod a2a-protocol:stream-message ((backend jsonrpc-a2a-backend) message
                                         &key on-event)
-  (let ((result (%rpc backend "SendStreamingMessage"
-                      (a2a-protocol:json-object
-                       "message" (a2a-protocol:encode-message message)))))
-    (let ((events (cond
-                    ((typep result 'a2a-protocol:a2a-stream-result)
-                     (a2a-protocol:a2a-stream-events result))
-                    ((listp result) result)
-                    (t (list result)))))
-      (when on-event
-        (mapc on-event events))
-      (a2a-protocol:make-a2a-stream-result events))))
+  (let ((events (%stream-events
+                 backend "SendStreamingMessage"
+                 (a2a-protocol:json-object
+                  "message" (a2a-protocol:encode-message message)))))
+    (when on-event
+      (mapc on-event events))
+    (a2a-protocol:make-a2a-stream-result events)))
 
 (defmethod a2a-protocol:get-task ((backend jsonrpc-a2a-backend) task-id
                                   &key history-length)
@@ -309,16 +332,12 @@
 
 (defmethod a2a-protocol:resubscribe-task ((backend jsonrpc-a2a-backend) task-id
                                           &key on-event)
-  (let ((result (%rpc backend "SubscribeToTask"
-                      (a2a-protocol:json-object "id" task-id))))
-    (let ((events (cond
-                    ((typep result 'a2a-protocol:a2a-stream-result)
-                     (a2a-protocol:a2a-stream-events result))
-                    ((listp result) result)
-                    (t (list result)))))
-      (when on-event
-        (mapc on-event events))
-      (a2a-protocol:make-a2a-stream-result events))))
+  (let ((events (%stream-events
+                 backend "SubscribeToTask"
+                 (a2a-protocol:json-object "id" task-id))))
+    (when on-event
+      (mapc on-event events))
+    (a2a-protocol:make-a2a-stream-result events)))
 
 (defun %post-rpc (transport method params &key timeout id notify)
   (%ensure-http)

@@ -13,7 +13,7 @@ JSON-RPC 2.0 + SSE binding for [`a2a-protocol`](https://github.com/egao1980/a2a-
   app)
 ```
 
-Client GFs (`send-message`, `get-task`, …) talk JSON-RPC over `rpc-protocol` (`:transport` or HTTP `:url` + `A2A-Version`).
+Client GFs (`send-message`, `get-task`, …) talk JSON-RPC over `rpc-protocol` (`:transport` or HTTP `:url` + `A2A-Version`). `stream-message` / `resubscribe-task` use `rpc-call-stream` over HTTP (SSE). Push-notification methods stay refused (`-32003`).
 
 Part of [cl-stack](https://github.com/egao1980/cl-stack) agent-wire. Tracks [#186](https://github.com/egao1980/cl-stack/issues/186).
 
